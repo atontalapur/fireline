@@ -16,7 +16,8 @@ COPY pipeline/regions.geojson pipeline/regions.geojson
 ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=""
 ENV NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=$NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-RUN cd app && npm run build
+# git does not keep empty folders; the run stage copies app/public even when it has no files.
+RUN mkdir -p app/public && cd app && npm run build
 
 # Pick the dataset: real files if present, mock otherwise.
 FROM node:24-slim AS data
