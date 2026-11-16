@@ -203,6 +203,9 @@ def test_series_shape():
     assert {"current", "peak_month_of_year", "peak_year", "annual"} == set(summary)
     assert summary["current"]["month"] == "2026-10"
     assert summary["current"]["partial"] is True
+    # Partial month: no comparison against a full-month baseline.
+    assert summary["current"]["ratio_to_median"] is None
+    assert summary["current"]["z"] is None and summary["current"]["percentile"] is None
     for entry in summary["annual"]:
         assert set(entry) == {"year", "total", "rank", "complete"}
         assert (entry["rank"] is None) == (not entry["complete"])

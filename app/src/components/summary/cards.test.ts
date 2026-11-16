@@ -30,9 +30,15 @@ function withAnnual(series: SeriesResponse, totals: number[], firstYear = 2000):
 }
 
 describe("summary cards on the Pantanal mock", () => {
-  it("describes the current month against normal and flags it", () => {
-    const card = currentCard(mock)!;
+  it("gives a complete current month's ratio and percentile", () => {
+    const current = { ...mock.summary.current, ratio_to_median: 0.78, percentile: 20, partial: false };
+    const card = currentCard({ ...mock, summary: { ...mock.summary, current } })!;
     expect(card.headline).toBe("Oct 2026: 99 fire cell-days, 0.78x the October median, 20th percentile.");
+  });
+
+  it("does not compare a partial current month with the full-month baseline, and flags it", () => {
+    const card = currentCard(mock)!;
+    expect(card.headline).toBe("Oct 2026: 99 fire cell-days.");
     expect(card.detail).toBe("A normal October has 127 fire cell-days (baseline median).");
     expect(card.flags).toEqual([
       "Partial month: 28 of 31 days observed.",

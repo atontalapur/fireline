@@ -4686,9 +4686,9 @@
    "month": "2026-10",
    "harmonized": 99.253,
    "baseline_median": 127.0,
-   "ratio_to_median": 0.78,
-   "z": -0.814,
-   "percentile": 20.0,
+   "ratio_to_median": null,
+   "z": null,
+   "percentile": null,
    "provisional": true,
    "partial": true
   },

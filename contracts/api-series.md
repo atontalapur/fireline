@@ -35,7 +35,7 @@ Exactly one of `cells` and `region` is non-null; otherwise 400. Cells outside ev
   ],
   "summary": {
     "current": {"month": "2026-10", "harmonized": 99.253, "baseline_median": 127.0,
-                "ratio_to_median": 0.78, "z": -0.814, "percentile": 20.0,
+                "ratio_to_median": null, "z": null, "percentile": null,
                 "provisional": true, "partial": true},
     "peak_month_of_year": 9,
     "peak_year": 2020,
@@ -97,6 +97,9 @@ Any other month with no rows for the selected cells is zero. Sensor availability
   - `ratio_to_median` = harmonized / baseline_median, rounded to 2 decimals; null if either is
     null or the median is 0.
   - `partial` = `valid_days` < days in that month.
+  - When `partial` is true, `ratio_to_median`, `z` and `percentile` are null: a count over part
+    of a month can't be compared with a full-month baseline. `harmonized` and `baseline_median`
+    are still given.
   - Other fields are copied from that month's entry.
 - `peak_month_of_year`: calendar month (1-12) with the highest baseline mean. Ties go to the
   earlier month.

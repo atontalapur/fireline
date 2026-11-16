@@ -194,15 +194,18 @@ export async function computeSeries(req: SeriesRequest): Promise<SeriesResponse>
 
   const cur = months[months.length - 1];
   const med = cur.baseline_median;
+  const partial = cur.valid_days < daysInMonth(cur.month);
+  // A partial month's count covers only some days, so comparing it with a full-month baseline
+  // would read as abnormally low. Keep the count and the baseline; drop the comparison.
   const current = {
     month: cur.month,
     harmonized: cur.harmonized,
     baseline_median: med,
-    ratio_to_median: cur.harmonized !== null && med ? round(cur.harmonized / med, 2) : null,
-    z: cur.z,
-    percentile: cur.percentile,
+    ratio_to_median: !partial && cur.harmonized !== null && med ? round(cur.harmonized / med, 2) : null,
+    z: partial ? null : cur.z,
+    percentile: partial ? null : cur.percentile,
     provisional: cur.provisional,
-    partial: cur.valid_days < daysInMonth(cur.month),
+    partial,
   };
 
   let peakMoy: number | null = null;
