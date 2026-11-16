@@ -164,6 +164,10 @@ describe("compare_to_baseline", () => {
   it("month: provisional and partial current month", async () => {
     const out = await compareToBaseline.execute({ region: "pantanal", month: "2026-10" });
     expect(out.provisional).toBe(true);
+    expect(out.value).not.toBeNull();
+    expect(out.median).not.toBeNull();
+    // 28 of 31 days: no comparison with the full-month baseline.
+    expect([out.ratio, out.z, out.percentile, out.rank]).toEqual([null, null, null, null]);
     expect(out.warnings.join(" ")).toMatch(/partial/);
     expect(out.warnings.join(" ")).toMatch(/provisional/);
   });

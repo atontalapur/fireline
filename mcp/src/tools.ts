@@ -263,7 +263,7 @@ export function registerFireTools(server: McpServer, client: FirelineClient): vo
     {
       title: "Compare to baseline",
       description: [
-        "Compare one month (YYYY-MM) or one calendar year to the area's historical baseline: value, baseline median, ratio to median, z-score, percentile, and rank (a month is ranked among the same calendar month in every year; a year among all years; 'of' is how many were ranked).",
+        "Compare one month (YYYY-MM) or one calendar year to the area's historical baseline: value, baseline median, ratio to median, z-score, percentile, and rank (a month is ranked among the same calendar month in every year; a year among all years; 'of' is how many were ranked). A partial month (some days without data, such as the current month) gets no ratio, z-score, percentile or rank.",
         UNITS,
         COVERAGE,
         "Give exactly one of region or cells, and exactly one of month or year.",
