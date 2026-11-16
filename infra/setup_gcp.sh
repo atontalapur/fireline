@@ -12,7 +12,8 @@
 #   TEAMMATE_EMAIL   Google account to grant roles/editor; skipped if empty
 #   RUN_APP_URL      Cloud Run service URL, e.g. https://fireline-abc123-uc.a.run.app
 #   CUSTOM_DOMAIN    custom domain, e.g. fireline.example.com
-#   GEMINI_MODEL     default gemini-2.5-flash
+#   GEMINI_MODEL     default gemini-3.5-flash
+#   GEMINI_LOCATION  default global (Gemini 3.x is served from the global endpoint)
 #
 # Usage:
 #   PROJECT_ID=my-proj DATA_BUCKET=my-bucket TEAMMATE_EMAIL=a@b.com bash infra/setup_gcp.sh
@@ -24,7 +25,8 @@ REGION="${REGION:-us-central1}"
 TEAMMATE_EMAIL="${TEAMMATE_EMAIL:-}"
 RUN_APP_URL="${RUN_APP_URL:-}"
 CUSTOM_DOMAIN="${CUSTOM_DOMAIN:-}"
-GEMINI_MODEL="${GEMINI_MODEL:-gemini-2.5-flash}"
+GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.5-flash}"
+GEMINI_LOCATION="${GEMINI_LOCATION:-global}"
 
 BROWSER_KEY_ID="fireline-maps-browser"
 SERVER_KEY_ID="fireline-maps-server"
@@ -118,9 +120,14 @@ else
   log "TEAMMATE_EMAIL not set; skipping teammate grant"
 fi
 
-log "Vertex AI test call ($GEMINI_MODEL in $REGION)"
+log "Vertex AI test call ($GEMINI_MODEL in $GEMINI_LOCATION)"
 token="$(gcloud auth print-access-token)"
-endpoint="https://${REGION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${GEMINI_MODEL}:generateContent"
+if [[ "$GEMINI_LOCATION" == "global" ]]; then
+  vertex_host="aiplatform.googleapis.com"
+else
+  vertex_host="${GEMINI_LOCATION}-aiplatform.googleapis.com"
+fi
+endpoint="https://${vertex_host}/v1/projects/${PROJECT_ID}/locations/${GEMINI_LOCATION}/publishers/google/models/${GEMINI_MODEL}:generateContent"
 response="$(curl -sS -X POST "$endpoint" \
   -H "Authorization: Bearer $token" \
   -H "Content-Type: application/json" \

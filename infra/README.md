@@ -4,13 +4,15 @@ One Google Cloud project hosts everything: Cloud Run, Vertex AI (Gemini), Maps P
 
 | Setting | Value |
 | --- | --- |
-| Project ID | `<PROJECT_ID>` |
+| Project ID | `tribal-primacy-514904-g0` |
 | Region | `us-central1` |
-| Data bucket | `gs://<DATA_BUCKET>` |
+| Data bucket | `gs://fireline-space-apps-data` (public read, GET/HEAD CORS) |
+| Gemini | `gemini-3.5-flash`, `global` endpoint |
+| Billing | Free Trial billing account ($300 credit, expires 2027-02-14), $10/month budget alert at 50%, 90%, 100% |
 | Cloud Run URL | `<RUN_APP_URL>` |
 | Custom domain | `<CUSTOM_DOMAIN>` |
 
-Fill these in once the project exists.
+Fill in the Cloud Run URL and custom domain after the first deploy.
 
 ## 1. Manual steps (console)
 
@@ -24,31 +26,30 @@ The script below grants the teammate Editor. If you skip it, add them in IAM & A
 
 ## 2. Local gcloud
 
-`gcloud` must run before the script will work. On this machine it currently fails because the Homebrew `python@3.14` path it points to is missing. Fix with either:
+`gcloud` must run before the script will work. If it fails because the Homebrew `python@3.14` path it points to is missing, point it at another Python 3:
 
 ```bash
-brew reinstall python@3.14
-# or point gcloud at another Python 3
-export CLOUDSDK_PYTHON="$(command -v python3)"
+export CLOUDSDK_PYTHON="$(command -v python3)"   # add to ~/.zshrc to keep it
 ```
 
 Then sign in:
 
 ```bash
 gcloud auth login
+gcloud auth application-default login   # used by pipeline/export.py --upload
 gcloud --version
 ```
 
 ## 3. Run the setup script
 
 ```bash
-PROJECT_ID=<PROJECT_ID> \
-DATA_BUCKET=<DATA_BUCKET> \
+PROJECT_ID=tribal-primacy-514904-g0 \
+DATA_BUCKET=fireline-space-apps-data \
 TEAMMATE_EMAIL=<teammate@gmail.com> \
 bash infra/setup_gcp.sh
 ```
 
-Optional: `REGION` (default `us-central1`), `RUN_APP_URL`, `CUSTOM_DOMAIN`, `GEMINI_MODEL` (default `gemini-2.5-flash`).
+Optional: `REGION` (default `us-central1`), `RUN_APP_URL`, `CUSTOM_DOMAIN`, `GEMINI_MODEL` (default `gemini-3.5-flash`), `GEMINI_LOCATION` (default `global`).
 
 The script:
 
@@ -58,15 +59,15 @@ The script:
    - `fireline-maps-browser`: referrers `http://localhost:3000/*`, the run.app URL and the custom domain; APIs Maps JavaScript + Places (New).
    - `fireline-maps-server`: API restricted to Geocoding.
 4. Grants `TEAMMATE_EMAIL` the Editor role.
-5. Sends one Gemini request to Vertex AI in `us-central1` and prints the reply.
+5. Sends one Gemini request to Vertex AI (global endpoint) and prints the reply.
 
 It is safe to re-run. The Cloud Run URL and custom domain are not known on day one, so re-run with `RUN_APP_URL` and `CUSTOM_DOMAIN` set after the first deploy to update the browser key referrers.
 
 Copy the key strings into `.env` (see `.env.example`):
 
 ```bash
-gcloud services api-keys get-key-string fireline-maps-browser --project=<PROJECT_ID>
-gcloud services api-keys get-key-string fireline-maps-server --project=<PROJECT_ID>
+gcloud services api-keys get-key-string fireline-maps-browser --project=tribal-primacy-514904-g0
+gcloud services api-keys get-key-string fireline-maps-server --project=tribal-primacy-514904-g0
 ```
 
 ## 4. Environment variables
