@@ -375,18 +375,20 @@ def build_series(
     cur = months[-1]
     cur_period = window.index[-1]
     med = cur["baseline_median"]
+    partial = cur["valid_days"] < cur_period.days_in_month
+    # A partial month covers only some days: no comparison with a full-month baseline.
     ratio = None
-    if cur["harmonized"] is not None and med:
+    if not partial and cur["harmonized"] is not None and med:
         ratio = _num(cur["harmonized"] / med, 2)
     current = {
         "month": cur["month"],
         "harmonized": cur["harmonized"],
         "baseline_median": med,
         "ratio_to_median": ratio,
-        "z": cur["z"],
-        "percentile": cur["percentile"],
+        "z": None if partial else cur["z"],
+        "percentile": None if partial else cur["percentile"],
         "provisional": cur["provisional"],
-        "partial": cur["valid_days"] < cur_period.days_in_month,
+        "partial": partial,
     }
     means = {m: st["mean"] for m, st in stats.items() if st is not None}
     peak_moy = max(means, key=lambda m: (means[m], -m)) if means else None

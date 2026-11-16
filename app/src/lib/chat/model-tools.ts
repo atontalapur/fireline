@@ -7,6 +7,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { REGION_KEYS } from "@/lib/contracts";
 import type { GetSeriesOutput } from "@/lib/fire-tools";
+import { daysInMonth } from "@/lib/series/compute";
 import type { FireToolSet } from "./example-answers";
 import { displayInput } from "./format";
 import { selectionArea } from "./selection";
@@ -31,14 +32,19 @@ export function compactSeries(s: GetSeriesOutput, windowed: boolean) {
     peak_month_of_year: s.summary.peak_month_of_year,
     peak_year: s.summary.peak_year,
     annual: s.summary.annual,
-    months: rows.map((m) => ({
-      month: m.month,
-      harmonized: m.harmonized,
-      baseline_median: m.baseline_median,
-      z: m.z,
-      percentile: m.percentile,
-      provisional: m.provisional,
-    })),
+    months: rows.map((m) => {
+      // Same rule as summary.current: a partial month isn't compared with a full-month baseline.
+      const partial = m.valid_days > 0 && m.valid_days < daysInMonth(m.month);
+      return {
+        month: m.month,
+        harmonized: m.harmonized,
+        baseline_median: m.baseline_median,
+        z: partial ? null : m.z,
+        percentile: partial ? null : m.percentile,
+        provisional: m.provisional,
+        ...(partial ? { partial: true } : {}),
+      };
+    }),
     months_note: windowed
       ? s.months.length > rows.length
         ? "Only the last 60 months of the window are listed; narrow start/end for earlier ones."

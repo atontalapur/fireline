@@ -9,8 +9,9 @@ let cached: { key: string; model: LanguageModel } | null = null;
 export function getChatModel(): LanguageModel | null {
   const project = process.env.GOOGLE_CLOUD_PROJECT || process.env.GOOGLE_VERTEX_PROJECT;
   if (!project) return null;
-  const location = process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
-  const modelId = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  // Gemini 3.x is served from the global endpoint, not a region (see .env.example).
+  const location = process.env.GEMINI_LOCATION || "global";
+  const modelId = process.env.GEMINI_MODEL || "gemini-3.5-flash";
   const key = `${project}|${location}|${modelId}`;
   if (cached?.key !== key) cached = { key, model: createVertex({ project, location })(modelId) };
   return cached.model;

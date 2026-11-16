@@ -102,7 +102,7 @@ export const getSeries: FireTool<typeof GetSeriesInput, GetSeriesOutput> = {
 export const compareToBaseline: FireTool<typeof CompareToBaselineInput, CompareToBaselineOutput> = {
   name: "compare_to_baseline",
   description:
-    "Compare one month (YYYY-MM) or one year to the area's 2003-2022 baseline: value, median, ratio, robust z, percentile and rank.",
+    "Compare one month (YYYY-MM) or one year to the area's 2003-2022 baseline: value, median, ratio, robust z, percentile and rank. A partial month (some days without data) gets no ratio, z, percentile or rank.",
   inputSchema: CompareToBaselineInput,
   execute: async (input) => {
     const series = await computeSeries(await seriesRequestFor({ cells: input.cells, region: input.region }));
@@ -122,8 +122,13 @@ function compareMonth(series: SeriesResponse, month: string, warnings: string[])
   const same = series.months.filter((x) => Number(x.month.slice(5, 7)) === moy && x.harmonized !== null);
   const value = m.harmonized;
   const out = [...warnings];
+  // A count over part of a month can't be compared with a full-month baseline (as in summary.current).
+  const partial = m.valid_days > 0 && m.valid_days < daysInMonth(month);
   if (m.valid_days === 0) out.push(`${month}: no satellite data (valid_days = 0).`);
-  else if (m.valid_days < daysInMonth(month)) out.push(`${month} is partial: ${m.valid_days} of ${daysInMonth(month)} days have data.`);
+  else if (partial)
+    out.push(
+      `${month} is partial: ${m.valid_days} of ${daysInMonth(month)} days have data, so it is not compared with the full-month baseline.`,
+    );
   if (m.provisional) out.push(`${month} is provisional (NRT or incomplete).`);
   const madWarning = series.meta.warnings.find((w) => w.startsWith(`Baseline MAD is 0 for ${MONTH_NAMES[moy - 1]};`));
   if (madWarning) out.push(madWarning);
@@ -131,10 +136,10 @@ function compareMonth(series: SeriesResponse, month: string, warnings: string[])
     period: month,
     value,
     median: m.baseline_median,
-    ratio: value !== null && m.baseline_median ? round(value / m.baseline_median, 2) : null,
-    z: m.z,
-    percentile: m.percentile,
-    rank: value === null ? null : 1 + same.filter((x) => (x.harmonized as number) > value).length,
+    ratio: !partial && value !== null && m.baseline_median ? round(value / m.baseline_median, 2) : null,
+    z: partial ? null : m.z,
+    percentile: partial ? null : m.percentile,
+    rank: partial || value === null ? null : 1 + same.filter((x) => (x.harmonized as number) > value).length,
     of: same.length,
     provisional: m.provisional,
     warnings: out,
