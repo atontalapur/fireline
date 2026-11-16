@@ -1,0 +1,136 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  python:
+    name: Pipeline and contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          working-directory: pipeline
+          enable-cache: true
+          cache-dependency-glob: pipeline/uv.lock
+      - name: Install
+        working-directory: pipeline
+        run: uv sync --frozen
+      - name: Lint
+        run: uv run --frozen --project pipeline ruff check pipeline contracts
+      - name: Format
+        run: uv run --frozen --project pipeline ruff format --check pipeline contracts
+      - name: Pipeline tests
+        working-directory: pipeline
+        run: uv run --frozen pytest -q
+      - name: Contract mock tests
+        run: uv run --frozen --project pipeline pytest -q contracts/test_mock.py
+
+  app:
+    name: App
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Generate route types
+        run: npx next typegen
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Test
+        run: npm test
+      - name: Build
+        run: npm run build
+
+  mcp:
+    name: MCP server
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: mcp
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Test
+        run: npm test
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          load: true
+          tags: fireline:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke test
+        run: |
+          docker run -d --name fireline -p 8080:8080 fireline:ci
+          for _ in $(seq 1 30); do
+            curl -sf -o /dev/null http://127.0.0.1:8080/ && break
+            sleep 1
+          done
+          check() {
+            code=$(curl -s -o /tmp/body -w '%{http_code}' "$@")
+            echo "$code $(head -c 160 /tmp/body)"
+            [ "$code" = 200 ]
+          }
+          check http://127.0.0.1:8080/
+          check http://127.0.0.1:8080/method
+          # Exercises DuckDB in the image: the native library must ship in the standalone build.
+          check -X POST -H 'content-type: application/json' \
+            -d '{"region":"pantanal","start":"2020-01","end":"2020-12"}' \
+            http://127.0.0.1:8080/api/series
+          check 'http://127.0.0.1:8080/api/weather?region=pantanal&month=2020-09'
+      - name: Container logs
+        if: failure()
+        run: docker logs fireline || true
