@@ -4,11 +4,11 @@ One Google Cloud project hosts everything: Cloud Run, Vertex AI (Gemini), Maps P
 
 | Setting | Value |
 | --- | --- |
-| Project ID | `fireline-nasa-2026` |
+| Project ID | `tribal-primacy-514904-g0` |
 | Region | `us-central1` |
-| Data bucket | `gs://fireline-nasa-2026-data` (public read, GET/HEAD CORS) |
+| Data bucket | `gs://fireline-space-apps-data` (public read, GET/HEAD CORS) |
 | Gemini | `gemini-3.5-flash`, `global` endpoint |
-| Billing | "My Billing Account", $10/month budget alert at 50%, 90%, 100% |
+| Billing | Free Trial billing account ($300 credit, expires 2027-02-14), $10/month budget alert at 50%, 90%, 100% |
 | Cloud Run URL | `<RUN_APP_URL>` |
 | Custom domain | `<CUSTOM_DOMAIN>` |
 
@@ -43,8 +43,8 @@ gcloud --version
 ## 3. Run the setup script
 
 ```bash
-PROJECT_ID=fireline-nasa-2026 \
-DATA_BUCKET=fireline-nasa-2026-data \
+PROJECT_ID=tribal-primacy-514904-g0 \
+DATA_BUCKET=fireline-space-apps-data \
 TEAMMATE_EMAIL=<teammate@gmail.com> \
 bash infra/setup_gcp.sh
 ```
@@ -66,8 +66,8 @@ It is safe to re-run. The Cloud Run URL and custom domain are not known on day o
 Copy the key strings into `.env` (see `.env.example`):
 
 ```bash
-gcloud services api-keys get-key-string fireline-maps-browser --project=fireline-nasa-2026
-gcloud services api-keys get-key-string fireline-maps-server --project=fireline-nasa-2026
+gcloud services api-keys get-key-string fireline-maps-browser --project=tribal-primacy-514904-g0
+gcloud services api-keys get-key-string fireline-maps-server --project=tribal-primacy-514904-g0
 ```
 
 ## 4. Environment variables

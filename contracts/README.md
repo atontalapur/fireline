@@ -15,22 +15,22 @@ Any change to a shape goes through a PR that touches this folder.
 
 ## Public files
 
-`pipeline/export.py --upload` publishes these under `gs://fireline-nasa-2026-data/public/v1/`.
+`pipeline/export.py --upload` publishes these under `gs://fireline-space-apps-data/public/v1/`.
 The bucket is public-read with a GET/HEAD CORS rule, so the files load from a browser or DuckDB
 without credentials.
 
 | file | URL |
 |---|---|
-| index (sizes, sha256, row counts, `generated_at`) | `https://storage.googleapis.com/fireline-nasa-2026-data/public/v1/index.json` |
-| monthly series | `https://storage.googleapis.com/fireline-nasa-2026-data/public/v1/monthly.parquet` |
-| coverage (valid days per region-month) | `https://storage.googleapis.com/fireline-nasa-2026-data/public/v1/coverage_month.parquet` |
-| calibration | `https://storage.googleapis.com/fireline-nasa-2026-data/public/v1/calibration.parquet` |
-| hotspots, Pantanal | `https://storage.googleapis.com/fireline-nasa-2026-data/public/v1/hotspots_pantanal.parquet` |
-| hotspots, Western Canada | `https://storage.googleapis.com/fireline-nasa-2026-data/public/v1/hotspots_w_canada.parquet` |
-| hotspots, Punjab | `https://storage.googleapis.com/fireline-nasa-2026-data/public/v1/hotspots_punjab.parquet` |
-| validation | `https://storage.googleapis.com/fireline-nasa-2026-data/public/v1/validation.json` |
-| weather (tier 3, may be absent) | `https://storage.googleapis.com/fireline-nasa-2026-data/public/v1/weather.parquet` |
-| figures | `https://storage.googleapis.com/fireline-nasa-2026-data/public/v1/figures/{seam,scatter}_{region}.png` |
+| index (sizes, sha256, row counts, `generated_at`) | `https://storage.googleapis.com/fireline-space-apps-data/public/v1/index.json` |
+| monthly series | `https://storage.googleapis.com/fireline-space-apps-data/public/v1/monthly.parquet` |
+| coverage (valid days per region-month) | `https://storage.googleapis.com/fireline-space-apps-data/public/v1/coverage_month.parquet` |
+| calibration | `https://storage.googleapis.com/fireline-space-apps-data/public/v1/calibration.parquet` |
+| hotspots, Pantanal | `https://storage.googleapis.com/fireline-space-apps-data/public/v1/hotspots_pantanal.parquet` |
+| hotspots, Western Canada | `https://storage.googleapis.com/fireline-space-apps-data/public/v1/hotspots_w_canada.parquet` |
+| hotspots, Punjab | `https://storage.googleapis.com/fireline-space-apps-data/public/v1/hotspots_punjab.parquet` |
+| validation | `https://storage.googleapis.com/fireline-space-apps-data/public/v1/validation.json` |
+| weather (tier 3, may be absent) | `https://storage.googleapis.com/fireline-space-apps-data/public/v1/weather.parquet` |
+| figures | `https://storage.googleapis.com/fireline-space-apps-data/public/v1/figures/{seam,scatter}_{region}.png` |
 
 `index.json` lists exactly what the current export contains. Check it before assuming an optional
 file exists. It has a 60 s cache; other files have 5 min (JSON) or 1 h (Parquet, PNG).
@@ -49,16 +49,16 @@ INSTALL httpfs;
 LOAD httpfs;
 
 SELECT month, sum(harmonized) AS harmonized
-FROM read_parquet('https://storage.googleapis.com/fireline-nasa-2026-data/public/v1/monthly.parquet')
+FROM read_parquet('https://storage.googleapis.com/fireline-space-apps-data/public/v1/monthly.parquet')
 WHERE region = 'pantanal'
 GROUP BY month
 ORDER BY month;
 
 SELECT count(*)
-FROM read_parquet('https://storage.googleapis.com/fireline-nasa-2026-data/public/v1/hotspots_punjab.parquet')
+FROM read_parquet('https://storage.googleapis.com/fireline-space-apps-data/public/v1/hotspots_punjab.parquet')
 WHERE acq_datetime_utc >= TIMESTAMP '2024-10-01' AND acq_datetime_utc < TIMESTAMP '2024-11-01';
 
-DESCRIBE SELECT * FROM read_parquet('https://storage.googleapis.com/fireline-nasa-2026-data/public/v1/calibration.parquet');
+DESCRIBE SELECT * FROM read_parquet('https://storage.googleapis.com/fireline-space-apps-data/public/v1/calibration.parquet');
 ```
 
 DuckDB reads over HTTPS with range requests, so it downloads only the footer and the row groups a
