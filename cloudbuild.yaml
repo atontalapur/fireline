@@ -1,0 +1,20 @@
+# Used by scripts/deploy.sh. Builds the Dockerfile with the Maps browser key as a build arg
+# (Next.js inlines NEXT_PUBLIC_* at build time) and pushes the image.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --build-arg
+      - NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${_MAPS_BROWSER_KEY}
+      - -t
+      - ${_IMAGE}
+      - .
+images:
+  - ${_IMAGE}
+substitutions:
+  _IMAGE: ""
+  _MAPS_BROWSER_KEY: ""
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+timeout: 1200s
