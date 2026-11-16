@@ -1,13 +1,13 @@
 // Request/response shapes for POST /api/cells (monthly hex map layer, #27).
 import { z } from "zod";
-import { MAX_CELLS, RegionKey } from "@/lib/contracts";
+import { H3CellR6, MAX_CELLS, RegionKey } from "@/lib/contracts";
 
 const YearMonth = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "expected YYYY-MM");
 
 export const CellsRequest = z
   .object({
     region: RegionKey.nullable().default(null),
-    cells: z.array(z.string().regex(/^[0-9a-f]{15}$/)).min(1).max(MAX_CELLS).nullable().default(null),
+    cells: z.array(H3CellR6).min(1).max(MAX_CELLS).nullable().default(null),
     month: YearMonth,
   })
   .refine((r) => (r.cells === null) !== (r.region === null), {

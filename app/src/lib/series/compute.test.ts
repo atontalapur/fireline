@@ -172,6 +172,8 @@ describe("POST /api/series", () => {
     ["bad month", { region: "pantanal", end: "2024-13" }],
     ["unknown region", { region: "mars", end: "2024-01" }],
     ["cells outside every region", { cells: ["862a1072fffffff"], end: "2024-01" }],
+    ["an invalid H3 cell", { cells: ["fffffffffffffff"], end: "2024-01" }],
+    ["a cell at another resolution", { cells: ["85a84373fffffff"], end: "2024-01" }],
   ])("400 for %s", async (_name, body) => {
     const res = await post(body);
     expect(res.status).toBe(400);

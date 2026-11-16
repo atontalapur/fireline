@@ -46,7 +46,8 @@ function regionNames(): string {
 
 // Rough res-6 cell area, to refuse huge areas before enumerating cells.
 const R6_KM2 = cellArea(latLngToCell(0, 0, H3_RES), "km2");
-const MAX_ENUMERATE = 1_000_000;
+// ~0.5 s of polygonToCells; larger areas are refused before enumeration.
+const MAX_ENUMERATE = 250_000;
 
 function bboxAreaKm2(w: number, s: number, e: number, n: number): number {
   const R = 6371.0088;

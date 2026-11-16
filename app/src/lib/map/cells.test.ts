@@ -102,6 +102,8 @@ describe("POST /api/cells", () => {
   });
 
   it("rejects invalid bodies with 400", async () => {
+    expect((await post({ cells: ["fffffffffffffff"], month: "2020-09" })).status).toBe(400);
+    expect((await post({ cells: ["85a84373fffffff"], month: "2020-09" })).status).toBe(400);
     expect((await post("{not json")).status).toBe(400);
     expect((await post({ region: "pantanal", month: "2020-13" })).status).toBe(400);
     expect((await post({ month: "2020-09" })).status).toBe(400);

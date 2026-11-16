@@ -1,6 +1,6 @@
 // Shapes shared by POST /api/chat and the chat panel. Client-safe: zod only.
 import { z } from "zod";
-import { REGION_KEYS } from "@/lib/contracts";
+import { H3CellR6, REGION_KEYS } from "@/lib/contracts";
 
 /** Largest cell list the panel sends with a question; bigger drawn areas fall back to a region. */
 export const MAX_CHAT_CELLS = 10_000;
@@ -8,7 +8,7 @@ export const MAX_CHAT_CELLS = 10_000;
 export const ChatSelection = z.object({
   label: z.string().max(200),
   region: z.enum(REGION_KEYS).nullable(),
-  cells: z.array(z.string().regex(/^[0-9a-f]{15}$/)).max(MAX_CHAT_CELLS).nullable(),
+  cells: z.array(H3CellR6).max(MAX_CHAT_CELLS).nullable(),
   cell_count: z.number().int().nonnegative(),
   /** True when a large drawn area is stood in for by the preset region that contains it. */
   approximate: z.boolean().default(false),

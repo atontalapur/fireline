@@ -5,7 +5,7 @@
 // @/lib/series/area) carrying an HTTP status: 400 bad input, 404 no data or no place found,
 // 502/503 geocoding failures.
 import { z } from "zod";
-import { DEFAULT_BASELINE, type SeriesResponse } from "@/lib/contracts";
+import { DEFAULT_BASELINE, H3CellR6, type SeriesResponse } from "@/lib/contracts";
 import type { PolygonGeometry } from "@/lib/geo";
 import { SeriesError } from "@/lib/series/area";
 import { computeSeries, daysInMonth, median, round } from "@/lib/series/compute";
@@ -13,7 +13,7 @@ import { searchParamsFor } from "@/lib/csv/request";
 import { geocodeArea, polygonArea, presetKeyFor, presetOutput, seriesRequestFor } from "@/lib/fire-tools/area";
 
 const YearMonth = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
-const Cells = z.array(z.string()).max(50_000);
+const Cells = z.array(H3CellR6).max(50_000);
 const Polygon = z.object({
   type: z.enum(["Polygon", "MultiPolygon"]),
   coordinates: z.array(z.any()),

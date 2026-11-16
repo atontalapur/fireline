@@ -93,6 +93,7 @@ export async function hotspotsCsvStream(req: SeriesRequest, now: Date = new Date
         else controller.enqueue(format(next.value));
       } catch (err) {
         controller.error(err);
+        await rows.return(undefined).catch(() => {});
       }
     },
     async cancel() {

@@ -251,6 +251,8 @@ describe("POST /api/tools/[name]", () => {
     expect(res.status).toBe(400);
     expect(((await res.json()) as { error: string }).error).toMatch(/start/);
     expect((await call("get_series", { region: "mars" })).status).toBe(400);
+    // Without `end`, resolveArea used to run before validation and throw a 500 on a bad cell.
+    expect((await call("get_series", { cells: ["fffffffffffffff"] })).status).toBe(400);
   });
 
   it("every tool is reachable", () => {
