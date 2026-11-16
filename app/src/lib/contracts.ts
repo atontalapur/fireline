@@ -1,4 +1,5 @@
 // Shared request/response shapes. Source of truth: contracts/api-series.md.
+import { getResolution, isValidCell } from "h3-js";
 import { z } from "zod";
 
 export const REGION_KEYS = ["pantanal", "w_canada", "punjab"] as const;
@@ -12,9 +13,15 @@ export const DEFAULT_BASELINE: [number, number] = [2003, 2022];
 
 const YearMonth = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "expected YYYY-MM");
 
+/** An H3 cell id at resolution 6, the grid every dataset uses. */
+export const H3CellR6 = z
+  .string()
+  .regex(/^[0-9a-f]{15}$/)
+  .refine((c) => isValidCell(c) && getResolution(c) === 6, "expected an H3 resolution-6 cell id");
+
 export const SeriesRequest = z
   .object({
-    cells: z.array(z.string().regex(/^[0-9a-f]{15}$/)).max(MAX_CELLS).nullable().default(null),
+    cells: z.array(H3CellR6).max(MAX_CELLS).nullable().default(null),
     region: RegionKey.nullable().default(null),
     start: YearMonth.default(DEFAULT_START),
     end: YearMonth,

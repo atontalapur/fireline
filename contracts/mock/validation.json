@@ -1,0 +1,55 @@
+{
+ "mock": true,
+ "method_version": "1.0",
+ "regions": {
+  "pantanal": {
+   "raw_bias": 3.9,
+   "harmonized_bias": 1.02,
+   "loyo_r": 0.94,
+   "loyo_nrmse": 0.21,
+   "forward_r": 0.88,
+   "seam_ratio": 1.05,
+   "changepoint_p": 0.41,
+   "placebo": [
+    {"date": "2008-01", "seam_ratio": 0.97, "changepoint_p": 0.55},
+    {"date": "2015-01", "seam_ratio": 1.08, "changepoint_p": 0.38},
+    {"date": "2023-01", "seam_ratio": 0.92, "changepoint_p": 0.61}
+   ],
+   "peak_month_match": 0.875,
+   "figures": {
+    "seam": "figures/seam_pantanal.png",
+    "scatter": "figures/scatter_pantanal.png"
+   }
+  },
+  "w_canada": {
+   "raw_bias": 4.6,
+   "harmonized_bias": 0.97,
+   "loyo_r": 0.91,
+   "loyo_nrmse": 0.34,
+   "forward_r": 0.81,
+   "seam_ratio": 0.94,
+   "changepoint_p": 0.62,
+   "placebo": [
+    {"date": "2008-01", "seam_ratio": 1.11, "changepoint_p": 0.47},
+    {"date": "2015-01", "seam_ratio": 0.89, "changepoint_p": 0.52},
+    {"date": "2023-01", "seam_ratio": null, "changepoint_p": null}
+   ],
+   "peak_month_match": 1.0,
+   "figures": {
+    "seam": "figures/seam_w_canada.png"
+   }
+  },
+  "punjab": {
+   "raw_bias": 5.4,
+   "harmonized_bias": 1.08,
+   "loyo_r": 0.89,
+   "loyo_nrmse": null,
+   "forward_r": 0.79,
+   "seam_ratio": 1.12,
+   "changepoint_p": 0.0004,
+   "placebo": [],
+   "peak_month_match": 0.75,
+   "figures": {}
+  }
+ }
+}

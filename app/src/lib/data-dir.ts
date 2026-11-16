@@ -7,7 +7,8 @@ export function dataDir(): string {
 }
 
 export function dataFile(name: string): string {
-  return path.join(dataDir(), name);
+  // Runtime path (APP_DATA_DIR): keep it out of build-time file tracing.
+  return path.join(/* turbopackIgnore: true */ dataDir(), name);
 }
 
 // Public base URL for figures and other files served from the bucket.
