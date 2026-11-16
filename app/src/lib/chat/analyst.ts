@@ -14,7 +14,7 @@ export function buildInstructions(selection: ChatSelection | null): string {
     : [
         `Current selection: "${selection.label}"`,
         selection.region ? `preset key ${selection.region}` : null,
-        `${selection.cell_count} H3 res-6 cells`,
+        selection.cell_count > 0 ? `${selection.cell_count} H3 res-6 cells` : null,
         selection.approximate
           ? selection.region
             ? "the drawn area is large, so tools query the whole preset that contains it; say so"

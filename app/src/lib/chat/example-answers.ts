@@ -161,7 +161,11 @@ async function thisMonth(calls: Calls, selection: ChatSelection | null): Promise
   } else {
     place = `the ${regionName("pantanal")}`;
     input = { region: "pantanal" };
-    lead.push(`No area is selected, so this uses the ${regionName("pantanal")}.`);
+    lead.push(
+      selection
+        ? `Your area is too large to query from the chat, so this uses the ${regionName("pantanal")}.`
+        : `No area is selected, so this uses the ${regionName("pantanal")}.`,
+    );
   }
   const s = await calls.series(input);
   const c = s.summary.current;

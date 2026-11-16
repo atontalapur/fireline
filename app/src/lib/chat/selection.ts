@@ -26,7 +26,8 @@ export function toChatSelection(selection: AreaSelection | null): ChatSelection 
 /** Stable cache key for a selection. */
 export function selectionKey(selection: ChatSelection | null): string {
   if (!selection) return "none";
-  if (selection.region) return `region:${selection.region}`;
+  if (selection.region)
+    return selection.approximate ? `approx:${selection.region}:${selection.label}` : `region:${selection.region}`;
   if (!selection.cells) return "none";
   let h = 0x811c9dc5;
   for (const c of selection.cells) {
