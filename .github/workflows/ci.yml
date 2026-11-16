@@ -30,6 +30,7 @@ jobs:
           working-directory: pipeline
           enable-cache: true
           cache-dependency-glob: pipeline/uv.lock
+          cache-python: true
       - name: Install
         working-directory: pipeline
         run: uv sync --frozen
