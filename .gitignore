@@ -1,0 +1,11 @@
+# local data cache (raw + processed live in Cloud Storage, not git)
+data/
+.env
+.env.local
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+.worktrees/
