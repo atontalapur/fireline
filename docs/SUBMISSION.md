@@ -100,7 +100,9 @@ Python (pandas, DuckDB with the spatial and H3 extensions, NumPy, SciPy, rupture
 
 Backup link: TODO: https://<service>.run.app
 
-Source code: TODO: https://github.com/atontalapur/fireline (confirm the repo is public)
+Source code: https://github.com/atontalapur/fireline (public)
+
+Data (public, no login): https://storage.googleapis.com/fireline-space-apps-data/public/v1/index.json
 
 ---
 
