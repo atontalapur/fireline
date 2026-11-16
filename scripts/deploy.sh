@@ -28,12 +28,28 @@ fi
 REGION="${REGION:-us-central1}"
 SERVICE="${SERVICE:-fireline}"
 REPO="cloud-run-source-deploy"
-IMAGE="$REGION-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/$REPO/$SERVICE:$(git rev-parse --short HEAD)"
+DATA_BUCKET="${DATA_BUCKET:-fireline-space-apps-data}"
 
-if [ ! -f data/v1/monthly.parquet ]; then
-  echo "data/v1/ is empty, so the image would ship the mock data. Run scripts/fetch-data.sh first." >&2
+# Cloud Build uploads the working tree, so tag only clean trees with the commit they match.
+if [ -n "$(git status --porcelain)" ]; then
+  echo "The working tree has uncommitted changes; commit or stash them before deploying." >&2
   exit 1
 fi
+IMAGE="$REGION-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/$REPO/$SERVICE:$(git rev-parse --short HEAD)"
+
+# Without the full dataset in data/v1/ the image would ship the mock data or a partial set.
+if [ ! -f data/v1/index.json ]; then
+  echo "data/v1/ is empty. Run scripts/fetch-data.sh first." >&2
+  exit 1
+fi
+python3 - data/v1 <<'PY'
+import json, os, sys
+out = sys.argv[1]
+names = [f["path"] for f in json.load(open(os.path.join(out, "index.json")))["files"] if not f["path"].startswith("figures/")]
+missing = [n for n in names if not os.path.isfile(os.path.join(out, n))]
+if missing:
+    sys.exit(f"Missing in {out}: {', '.join(missing)}. Run scripts/fetch-data.sh.")
+PY
 
 if ! gcloud artifacts repositories describe "$REPO" --location "$REGION" --project "$GOOGLE_CLOUD_PROJECT" >/dev/null 2>&1; then
   gcloud artifacts repositories create "$REPO" --repository-format docker \
@@ -45,16 +61,23 @@ gcloud builds submit . \
   --config cloudbuild.yaml \
   --substitutions "_IMAGE=$IMAGE,_MAPS_BROWSER_KEY=${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}"
 
-# Env vars go in a temporary YAML file so values with commas or spaces survive.
+# --env-vars-file replaces every env var on the service, so the file is the complete set.
+# Values are JSON-encoded, which YAML reads as double-quoted strings, so any character is safe.
+# Unset optional vars are left out and named below, since leaving them out removes them.
 ENV_FILE="$(mktemp)"
 trap 'rm -f "$ENV_FILE"' EXIT
-emit() { [ -n "${2:-}" ] && printf '%s: "%s"\n' "$1" "$2" >> "$ENV_FILE" || true; }
-emit GOOGLE_CLOUD_PROJECT "$GOOGLE_CLOUD_PROJECT"
-emit GEMINI_MODEL "${GEMINI_MODEL:-gemini-3.5-flash}"
-emit GEMINI_LOCATION "${GEMINI_LOCATION:-global}"
-emit GOOGLE_MAPS_SERVER_KEY "${GOOGLE_MAPS_SERVER_KEY:-}"
-emit DATA_BUCKET "${DATA_BUCKET:-}"
-emit PUBLIC_BASE_URL "${PUBLIC_BASE_URL:-}"
+GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.5-flash}" GEMINI_LOCATION="${GEMINI_LOCATION:-global}" \
+DATA_BUCKET="$DATA_BUCKET" python3 - "$ENV_FILE" <<'PY'
+import json, os, sys
+names = ["GOOGLE_CLOUD_PROJECT", "GEMINI_MODEL", "GEMINI_LOCATION", "DATA_BUCKET", "GOOGLE_MAPS_SERVER_KEY", "PUBLIC_BASE_URL"]
+with open(sys.argv[1], "w") as f:
+    for n in names:
+        v = os.environ.get(n, "")
+        if v:
+            f.write(f"{n}: {json.dumps(v)}\n")
+        else:
+            print(f"warning: {n} is not set, so the service will run without it", file=sys.stderr)
+PY
 
 gcloud run deploy "$SERVICE" \
   --project "$GOOGLE_CLOUD_PROJECT" \

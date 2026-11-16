@@ -11,7 +11,7 @@ BUCKET="${DATA_BUCKET:-fireline-space-apps-data}"
 PREFIX="public/v1/"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/data/v1"
-LIST_URL="https://storage.googleapis.com/storage/v1/b/$BUCKET/o?prefix=$PREFIX&fields=items(name,size)"
+LIST_URL="https://storage.googleapis.com/storage/v1/b/$BUCKET/o?prefix=$PREFIX&fields=items(name,size,md5Hash)"
 
 listing="$(curl -fsS "$LIST_URL")"
 mapfile -t objects < <(printf '%s' "$listing" | python3 -c '
@@ -20,7 +20,7 @@ for item in json.load(sys.stdin).get("items", []):
     name = item["name"]
     if name.endswith("/") or "/figures/" in name:
         continue
-    print(name + "\t" + item["size"])
+    print(name + "\t" + item["size"] + "\t" + item.get("md5Hash", ""))
 ')
 
 if [ "${#objects[@]}" -eq 0 ]; then
@@ -29,18 +29,20 @@ if [ "${#objects[@]}" -eq 0 ]; then
 fi
 
 mkdir -p "$OUT"
+# Base64 MD5, the format the GCS JSON API reports in md5Hash.
+md5_b64() { python3 -c 'import base64, hashlib, sys; print(base64.b64encode(hashlib.md5(open(sys.argv[1], "rb").read()).digest()).decode())' "$1"; }
+
 for entry in "${objects[@]}"; do
-  name="${entry%%$'\t'*}"
-  size="${entry##*$'\t'}"
+  IFS=$'\t' read -r name size md5 <<<"$entry"
   file="$OUT/${name#"$PREFIX"}"
-  if [ -f "$file" ] && [ "$(wc -c < "$file")" -eq "$size" ]; then
+  if [ -f "$file" ] && [ "$(wc -c < "$file")" -eq "$size" ] && { [ -z "$md5" ] || [ "$(md5_b64 "$file")" = "$md5" ]; }; then
     echo "up to date  ${name#"$PREFIX"}"
     continue
   fi
   curl -fsS -o "$file.part" "https://storage.googleapis.com/$BUCKET/$name"
   got="$(wc -c < "$file.part")"
-  if [ "$got" -ne "$size" ]; then
-    echo "Size mismatch for $name: expected $size, got $got" >&2
+  if [ "$got" -ne "$size" ] || { [ -n "$md5" ] && [ "$(md5_b64 "$file.part")" != "$md5" ]; }; then
+    echo "Size or checksum mismatch for $name" >&2
     rm -f "$file.part"
     exit 1
   fi
@@ -48,7 +50,13 @@ for entry in "${objects[@]}"; do
   echo "downloaded  ${name#"$PREFIX"} ($size bytes)"
 done
 
-for required in monthly.parquet coverage_month.parquet index.json; do
-  [ -f "$OUT/$required" ] || { echo "Missing $required in $OUT" >&2; exit 1; }
-done
+# Every non-figure file named in index.json must be present (deploy.sh runs the same check).
+python3 - "$OUT" <<'PY'
+import json, os, sys
+out = sys.argv[1]
+names = [f["path"] for f in json.load(open(os.path.join(out, "index.json")))["files"] if not f["path"].startswith("figures/")]
+missing = [n for n in names if not os.path.isfile(os.path.join(out, n))]
+if missing:
+    sys.exit(f"Missing in {out}: {', '.join(missing)}")
+PY
 echo "Dataset ready in $OUT"
