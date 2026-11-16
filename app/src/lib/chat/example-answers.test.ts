@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { answerExample, clearExampleCaches } from "./example-answers";
+import { MAX_CACHE_ENTRIES, answerExample, clearExampleCaches } from "./example-answers";
 import { EXAMPLE_QUESTIONS } from "./examples";
 import { fmt, ordinal } from "./format";
 import type { ChatSelection } from "./types";
@@ -32,6 +32,14 @@ describe("example answers", () => {
       }
     },
   );
+
+  it("caps the answer cache, evicting the oldest selection first", async () => {
+    const { tools } = mockTools();
+    const area = (i: number): ChatSelection => ({ ...drawn, cells: [drawn.cells![0], `cell-${i}`] });
+    for (let i = 0; i <= MAX_CACHE_ENTRIES; i++) await answerExample("this-month", area(i), tools);
+    expect((await answerExample("this-month", area(MAX_CACHE_ENTRIES), tools)).cached).toBe(true);
+    expect((await answerExample("this-month", area(0), tools)).cached).toBe(false);
+  });
 
   it("fills the August 2024 template from compare_to_baseline", async () => {
     const { tools } = mockTools();

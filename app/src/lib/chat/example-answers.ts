@@ -18,6 +18,8 @@ type SeriesInput = z.infer<FireToolSet["get_series"]["inputSchema"]>;
 type CompareInput = z.infer<FireToolSet["compare_to_baseline"]["inputSchema"]>;
 
 const TTL_MS = 60 * 60 * 1000;
+/** Per-cache entry cap: "this-month" answers are keyed by the caller's selection, so keys are unbounded. */
+export const MAX_CACHE_ENTRIES = 500;
 type Entry<T> = { at: number; value: Promise<T> };
 const answerCache = new Map<string, Entry<ChatAnswer>>();
 const toolCache = new Map<string, Entry<unknown>>();
@@ -31,6 +33,9 @@ function cached<T>(cache: Map<string, Entry<unknown>>, key: string, run: () => P
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL_MS) return { value: hit.value as Promise<T>, hit: true };
   const value = run();
+  cache.delete(key);
+  // Maps iterate in insertion order, so the first key is the oldest entry.
+  while (cache.size >= MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value as string);
   cache.set(key, { at: Date.now(), value });
   value.catch(() => {
     if (cache.get(key)?.value === value) cache.delete(key);
