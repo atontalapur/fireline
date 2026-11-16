@@ -9,3 +9,7 @@ __pycache__/
 .ruff_cache/
 .DS_Store
 .worktrees/
+node_modules/
+.next/
+next-env.d.ts
+*.tsbuildinfo
