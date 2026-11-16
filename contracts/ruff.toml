@@ -1,0 +1,2 @@
+# Use the pipeline ruff settings for the mock generator and its test.
+extend = "../pipeline/pyproject.toml"
